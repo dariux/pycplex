@@ -1,0 +1,11 @@
+1.0 (December 2006) Initial release
+
+1.1 (July 2007) Fixes a bug in pycplex.py for 64-bit platforms.
+Thanks to Christoph Lampert for the fix.
+
+1.2 (October 2007) 
+Added checks to CPX.c to make sure the right size integer arrays are passed
+to CPLEX on 64-bit platforms.
+
+Added qpopt(), addrows(), and copyquad() functions. Thanks to Fabio De Bona for the 
+additions.
