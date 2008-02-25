@@ -47,10 +47,15 @@ static PyObject *delrows(PyObject *self, PyObject *args);
 static PyObject *addrows(PyObject *self, PyObject *args); 
 static PyObject *chgcoeflist(PyObject *self, PyObject *args);
 static PyObject *chgcoef(PyObject *self, PyObject *args);
+static PyObject *chgbds(PyObject *self, PyObject *args);
 static PyObject *lpopt(PyObject *self, PyObject *args);
 static PyObject *getx(PyObject *self, PyObject *args);
 static PyObject *getobjval(PyObject *self, PyObject *args);
 static PyObject *getstat(PyObject *self, PyObject *args);
+static PyObject *addsos(PyObject *self, PyObject *args);
+static PyObject *copysos(PyObject *self, PyObject *args);
+static PyObject *delsetsos(PyObject *self, PyObject *args);
+
 
 static void checkintsize(PyArrayObject *intarray);
 static void setCPLEXerrorstring(CPXENVptr env, int status);
@@ -108,6 +113,7 @@ static PyMethodDef methods[] = {
   {"addrows", addrows, METH_VARARGS}, 
   {"chgcoeflist", chgcoeflist, METH_VARARGS, chgcoeflist_doc},
   {"chgcoef", chgcoef, METH_VARARGS},
+  {"chgbds", chgbds, METH_VARARGS},
   {"lpopt", lpopt, METH_VARARGS},
   {"mipopt", lpopt, METH_VARARGS}, // same function as lpopt
   {"qpopt", lpopt, METH_VARARGS}, // same function as lpopt
@@ -116,6 +122,9 @@ static PyMethodDef methods[] = {
   {"getobjval", getobjval, METH_VARARGS},
   {"getmipobjval", getobjval, METH_VARARGS}, // same as getobjval
   {"getstat", getstat, METH_VARARGS, getstat_doc},
+  {"addsos", addsos, METH_VARARGS},
+  {"copysos", copysos, METH_VARARGS},
+  {"delsetsos", delsetsos, METH_VARARGS},
   {NULL, NULL} /* sentinel */
 };
 
@@ -515,6 +524,45 @@ PyObject *chgcoef(PyObject *self, PyObject *args) {
   return Py_None;
 }
 
+PyObject *chgbds(PyObject *self, PyObject *args) {
+  /* The routine CPXchgbds is used to change the upper or lower bounds 
+     on a set of variables of a problem. Several bounds can be changed 
+     at once, with each bound specified by the index of the variable 
+     with which it is associated. The value of a variable can be fixed 
+     at one value by setting the upper and lower bounds to the same value. 
+  */
+
+  int status;
+
+  CPXENVptr env;
+  CPXLPptr lp;
+  int cnt;
+
+  PyObject *pyenv, *pylp;
+  PyArrayObject *indices, *lu, *bd;
+  if (!PyArg_ParseTuple(args, "OOiO!O!O!",
+			&pyenv, &pylp, 
+			&cnt,
+			&PyArray_Type, &indices, 
+			&PyArray_Type, &lu, 
+			&PyArray_Type, &bd))
+    return NULL;
+
+  checkintsize(indices);
+
+  env = PyCObject_AsVoidPtr(pyenv);
+  lp = PyCObject_AsVoidPtr(pylp);
+
+  status = CPXchgbds(env, lp, cnt, 
+		     (int *)indices->data, 
+		     (char *)lu->data, 
+		     (double *)bd->data);
+  CPXSTATUS;
+  return Py_BuildValue("i", status); 
+}
+
+
+
 PyObject *addrows(PyObject *self, PyObject *args) { 
   /* int CPXPUBLIC CPXaddrows(CPXCENVptr env, CPXLPptr lp, 
    * int ccnt, int rcnt, int nzcnt, const double * rhs,  
@@ -647,6 +695,8 @@ PyObject *lpopt(PyObject *self, PyObject *args) {
   probtype = CPXgetprobtype(env, lp);
   if (probtype == CPXPROB_MILP)
     status = CPXmipopt(env,lp);
+  else if (probtype == CPXPROB_MIQP)
+    status = CPXmipopt(env,lp);
   else if (probtype == CPXPROB_QP)
     status = CPXqpopt(env,lp);
   else
@@ -740,6 +790,142 @@ PyObject *getstat(PyObject *self, PyObject *args) {
   
   return Py_BuildValue("i", lpstat);
 }
+
+
+PyObject *addsos(PyObject *self, PyObject *args) {
+  /* CPXaddsos */
+  /* int CPXPUBLIC CPXaddsos(CPXCENVptr env, CPXLPptr lp, 
+     int numsos, int numsosnz, 
+     const char * sostype, 
+     const int * sospri, const int * sosbeg, const int * sosind, 
+     const double * soswt) */
+
+  int status;
+
+  CPXENVptr env;
+  CPXLPptr lp;
+  int numsos, numsosnz;
+  /* Python input variables */
+  PyObject *pyenv, *pylp;
+  PyArrayObject *sostype;
+  PyArrayObject *sospri, *sosbeg, *sosind; 
+  PyArrayObject *soswt;
+  import_array();
+
+  if (!PyArg_ParseTuple(args, "OOiiO!O!O!O!O!", 
+			&pyenv, &pylp,
+			&numsos, &numsosnz,
+			&PyArray_Type, &sostype, 
+			&PyArray_Type, &sospri, 
+			&PyArray_Type, &sosbeg,
+			&PyArray_Type, &sosind, 
+			&PyArray_Type, &soswt))
+    return NULL;
+
+  checkintsize(sospri);
+  checkintsize(sosbeg);
+  checkintsize(sosind);
+
+  env = PyCObject_AsVoidPtr(pyenv);
+  lp = PyCObject_AsVoidPtr(pylp);
+
+  status = CPXaddsos(env, lp, numsos, numsosnz,
+		     (char *)sostype->data, 
+		     (int *)sospri->data, 
+		     (int *)sosbeg->data, 
+		     (int *)sosind->data, 
+		     (double *)soswt->data);
+  CPXSTATUS;
+
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
+PyObject *copysos(PyObject *self, PyObject *args) {
+  /* CPXcopysos */
+  /* int CPXPUBLIC CPXcopysos(CPXCENVptr env, CPXLPptr lp, 
+     int numsos, int numsosnz, 
+     const char * sostype, 
+     const int * sospri, const int * sosbeg, const int * sosind, 
+     const double * soswt) */
+
+  int status;
+
+  CPXENVptr env;
+  CPXLPptr lp;
+  int numsos, numsosnz;
+  /* Python input variables */
+  PyObject *pyenv, *pylp;
+  PyArrayObject *sostype;
+  PyArrayObject *sospri, *sosbeg, *sosind; 
+  PyArrayObject *soswt;
+  import_array();
+
+  if (!PyArg_ParseTuple(args, "OOiiO!O!O!O!O!", 
+			&pyenv, &pylp,
+			&numsos, &numsosnz,
+			&PyArray_Type, &sostype, 
+			&PyArray_Type, &sospri, 
+			&PyArray_Type, &sosbeg,
+			&PyArray_Type, &sosind, 
+			&PyArray_Type, &soswt))
+    return NULL;
+
+  checkintsize(sospri);
+  checkintsize(sosbeg);
+  checkintsize(sosind);
+
+  env = PyCObject_AsVoidPtr(pyenv);
+  lp = PyCObject_AsVoidPtr(pylp);
+
+  status = CPXcopysos(env, lp, numsos, numsosnz,
+		      (char *)sostype->data, 
+		      (int *)sospri->data, 
+		      (int *)sosbeg->data, 
+		      (int *)sosind->data, 
+		      (double *)soswt->data);
+  CPXSTATUS;
+
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
+PyObject *delsetsos(PyObject *self, PyObject *args) {
+  /* CPXdelsetsos */
+  /* int CPXPUBLIC CPXdelsetsos(CPXCENVptr env, CPXLPptr lp, int * delset) */
+
+  int status;
+
+  CPXENVptr env;
+  CPXLPptr lp;
+
+  /* Python input variables */
+  PyObject *pyenv, *pylp;
+  PyArrayObject *delset;
+  import_array();
+
+  if (!PyArg_ParseTuple(args, "OOO!", 
+			&pyenv, &pylp,
+			&PyArray_Type, &delset))
+    return NULL;
+
+  checkintsize(delset);
+
+  env = PyCObject_AsVoidPtr(pyenv);
+  lp = PyCObject_AsVoidPtr(pylp);
+
+  status = CPXdelsetsos(env, lp, (int *)delset->data);
+  CPXSTATUS;
+
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
+
+
 
 
 

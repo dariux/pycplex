@@ -8,7 +8,6 @@ NUMPYINC = $(LOCALDIR)/lib/python2.5/site-packages/numpy/core/include/numpy
 CPLEXINC = /pkgs/ilog/cplex91/include
 CPLEXLIB = /pkgs/ilog/cplex91/lib/x86_RHEL3.0_3.2/static_pic
 
-
 CFLAGS = -I$(PYTHONINC) -I$(NUMPYINC) -I$(CPLEXINC) -fPIC
 LDFLAGS = -shared -L$(CPLEXLIB)
 
