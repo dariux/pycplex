@@ -9,3 +9,13 @@ to CPLEX on 64-bit platforms.
 
 Added qpopt(), addrows(), and copyquad() functions. Thanks to Fabio De Bona for the 
 additions.
+
+1.3 (February 2008)
+Added addsos(), copysos(), delsetsos() functions
+Added chgbds() function
+These functions are untested, please let me know if they work correctly.
+
+Thanks to Christina Fabritius Eskebæk for adding test3 case in pycplex.py 
+for quadratic and quadratic integer programs.
+
+
