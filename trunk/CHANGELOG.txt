@@ -15,7 +15,7 @@ Added addsos(), copysos(), delsetsos() functions
 Added chgbds() function
 These functions are untested, please let me know if they work correctly.
 
-Thanks to Christina Fabritius Eskebæk for adding test3 case in pycplex.py 
+Thanks to Christina Fabritius Eskebaek for adding test3 case in pycplex.py 
 for quadratic and quadratic integer programs.
 
 
