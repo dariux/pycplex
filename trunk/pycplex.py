@@ -61,41 +61,58 @@ class MPProb:
         self.ub = Inf * N.ones((numcols,))
         self.rngval = None # or N.zeros((numrows,))
 
+    @staticmethod
+    def cplexsparse(A):
+        """Convert matrix A to CPLEX sparse representation
+        Thanks to Stephen Hartke for the code"""
         
+        A = N.asarray(A, dtype=float)
+        numrows, numcols = A.shape
+        # n is the number of non-zero entries in A
+        n = len(A.nonzero()[0])
+
+        matval = N.empty((n,), dtype=float)
+        matind = N.empty((n,), dtype=N.int32)
+        matbeg = N.empty((numcols,), dtype=N.int32)
+        matcnt = N.empty((numcols,), dtype=N.int32)
+       
+        i = 0
+        for col in xrange(0, numcols):
+            matbeg[col] = i
+            cur_row_count = 0
+            for row in xrange(0, numrows):
+                if A[row][col] != 0:
+                    matval[i] = A[row][col]
+                    matind[i] = row
+                    i += 1
+                    cur_row_count += 1
+            matcnt[col] = cur_row_count
+        assert(i == n)
+
+        return {'matval':matval, 'matind':matind,
+                'matbeg':matbeg, 'matcnt':matcnt}
+
+            
     def makesparse(self,A):
         """Convert constraint matrix A to CPLEX sparse representation"""
         self.A = N.asarray(A, dtype=float)
-        self.matval = self.A.transpose().copy()
-        self.matval.shape = (self.numrows*self.numcols,)
+        s = MPProb.cplexsparse(self.A)
+        
+        self.matval = s['matval']
+        self.matind = s['matind']
+        self.matbeg = s['matbeg']
+        self.matcnt = s['matcnt']
 
-        # CPLEX sparse index matrices
-        self.matbeg = N.empty((self.numcols,), dtype=N.int32)
-        self.matcnt = N.empty((self.numcols,), dtype=N.int32)
-        self.matind = N.empty((self.numrows*self.numcols,), dtype=N.int32)
 
-        for i in xrange(0,self.numcols):
-            self.matbeg[i] = i * self.numrows
-            for j in xrange(0, self.numrows):
-                self.matind[i*self.numrows + j] = j
-                self.matcnt[i] = self.numrows
-
-    # for quadratic matrix Q
     def qmakesparse(self,Q):
         """Convert matrix Q to CPLEX sparse representation"""
         self.Q = N.asarray(Q, dtype=float)
-        self.qmatval = self.Q.transpose().copy()
-        self.qmatval.shape = (self.numcols*self.numcols,)
-
-        # CPLEX sparse index matrices
-        self.qmatbeg = N.empty((self.numcols,), dtype=N.int32)
-        self.qmatcnt = N.empty((self.numcols,), dtype=N.int32)
-        self.qmatind = N.empty((self.numcols*self.numcols,), dtype=N.int32)
-
-        for i in xrange(0,self.numcols):
-            self.qmatbeg[i] = i * self.numcols
-            for j in xrange(0, self.numcols):
-                self.qmatind[i*self.numcols + j] = j
-                self.qmatcnt[i] = self.numcols
+        s = MPProb.cplexsparse(self.Q)
+        
+        self.qmatval = s['matval']
+        self.qmatind = s['matind']
+        self.qmatbeg = s['matbeg']
+        self.qmatcnt = s['matcnt']
 
 
     def verify(self):

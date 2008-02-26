@@ -1,6 +1,4 @@
 
-Version 1.3, February 2008
-
 This software provides a Python interface to the CPLEX C Callable
 Library. It implements a subset of the most commonly used
 functions. If you need some other function, it should be easy it

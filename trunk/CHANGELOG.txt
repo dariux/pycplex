@@ -18,4 +18,8 @@ These functions are untested, please let me know if they work correctly.
 Thanks to Christina Fabritius Eskebaek for adding test3 case in pycplex.py 
 for quadratic and quadratic integer programs.
 
+1.4 (February 2008)
+Added MPProb.cplexsparse() function to convert a given matrix to CPLEX sparse 
+representation. Only non-zero entries are passed to CPLEX. 
+Thanks to Stephen Hartke for this contribution.
 
