@@ -36,10 +36,12 @@ static PyObject *createprob(PyObject *self, PyObject *args);
 static PyObject *writeprob(PyObject *self, PyObject *args);
 static PyObject *freeprob(PyObject *self, PyObject *args);
 static PyObject *setintparam(PyObject *self, PyObject *args);
+static PyObject *setdblparam(PyObject *self, PyObject *args);
 static PyObject *copylp(PyObject *self, PyObject *args);
 static PyObject *copyquad(PyObject *self, PyObject *args); 
 static PyObject *copyctype(PyObject *self, PyObject *args);
 static PyObject *copymipstart(PyObject *self, PyObject *args);
+static PyObject *copystart(PyObject *self, PyObject *args);
 static PyObject *chgobj(PyObject *self, PyObject *args);
 static PyObject *newcols(PyObject *self, PyObject *args);
 static PyObject *newrows(PyObject *self, PyObject *args);
@@ -50,6 +52,10 @@ static PyObject *chgcoef(PyObject *self, PyObject *args);
 static PyObject *chgbds(PyObject *self, PyObject *args);
 static PyObject *lpopt(PyObject *self, PyObject *args);
 static PyObject *getx(PyObject *self, PyObject *args);
+static PyObject *getslack(PyObject *self, PyObject *args);
+static PyObject *getpi(PyObject *self, PyObject *args);
+static PyObject *getdj(PyObject *self, PyObject *args);
+static PyObject *getbase(PyObject *self, PyObject *args);
 static PyObject *getobjval(PyObject *self, PyObject *args);
 static PyObject *getstat(PyObject *self, PyObject *args);
 static PyObject *addsos(PyObject *self, PyObject *args);
@@ -102,10 +108,12 @@ static PyMethodDef methods[] = {
   {"writeprob", writeprob, METH_VARARGS, writeprob_doc},
   {"freeprob", freeprob, METH_VARARGS},
   {"setintparam", setintparam, METH_VARARGS},
+  {"setdblparam", setdblparam, METH_VARARGS},
   {"copylp", copylp, METH_VARARGS},
   {"copyquad", copyquad, METH_VARARGS}, 
   {"copyctype", copyctype, METH_VARARGS},
   {"copymipstart", copymipstart, METH_VARARGS},
+  {"copystart", copystart, METH_VARARGS},
   {"chgobj", chgobj, METH_VARARGS, chgobj_doc},
   {"newcols", newcols, METH_VARARGS, newcols_doc},
   {"newrows", newrows, METH_VARARGS, newrows_doc},
@@ -119,6 +127,10 @@ static PyMethodDef methods[] = {
   {"qpopt", lpopt, METH_VARARGS}, // same function as lpopt
   {"getx", getx, METH_VARARGS},
   {"getmipx", getx, METH_VARARGS}, // same as getx
+  {"getslack", getslack, METH_VARARGS},
+  {"getpi", getpi, METH_VARARGS},
+  {"getdj", getx, METH_VARARGS},
+  {"getbase", getbase, METH_VARARGS},
   {"getobjval", getobjval, METH_VARARGS},
   {"getmipobjval", getobjval, METH_VARARGS}, // same as getobjval
   {"getstat", getstat, METH_VARARGS, getstat_doc},
@@ -128,9 +140,10 @@ static PyMethodDef methods[] = {
   {NULL, NULL} /* sentinel */
 };
 
-void initCPX(void)
-{
+void initCPX(void) {
   (void) Py_InitModule("CPX", methods);
+
+  import_array();  // to initialize NumPy
 }
 
 PyObject *openCPLEX(PyObject *self) {
@@ -239,6 +252,25 @@ PyObject *setintparam(PyObject *self, PyObject *args) {
   return Py_None;
 }
 
+PyObject *setdblparam(PyObject *self, PyObject *args) {
+  /* CPXsetdblparam */
+  int status;
+  int whichparam;
+  double newvalue;
+
+  CPXENVptr env; 
+  PyObject *pyenv;
+  if (!PyArg_ParseTuple(args, "Oid", &pyenv, &whichparam, &newvalue))
+    return NULL;
+  env = PyCObject_AsVoidPtr(pyenv);
+
+  status = CPXsetdblparam (env, whichparam, newvalue);
+  CPXSTATUS;
+
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
 PyObject *copymipstart(PyObject *self, PyObject *args) {
   /* CPXcopymipstart - copy MIP starting values */
 
@@ -249,7 +281,6 @@ PyObject *copymipstart(PyObject *self, PyObject *args) {
 
   PyObject *pyenv, *pylp;
   PyArrayObject *indices, *value;
-  import_array();
 
   if (!PyArg_ParseTuple(args, "OOiO!O!",
 			&pyenv, &pylp, &cnt, 
@@ -263,6 +294,41 @@ PyObject *copymipstart(PyObject *self, PyObject *args) {
   lp = PyCObject_AsVoidPtr(pylp);
 
   status = CPXcopymipstart(env, lp, cnt, (int *)indices->data, (double *)value->data);
+  CPXSTATUS;
+
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+PyObject *copystart(PyObject *self, PyObject *args) {
+  /* CPXcopystart - copy LP simplex starting values */
+
+  int status;
+  CPXENVptr env;
+  CPXLPptr lp;
+
+  PyObject *pyenv, *pylp;
+  PyArrayObject *cstat, *rstat, *cprim, *rprim, *cdual, *rdual;
+
+  if (!PyArg_ParseTuple(args, "OOO!O!O!O!O!O!",
+            &pyenv, &pylp,
+            &PyArray_Type, &cstat,
+            &PyArray_Type, &rstat,
+            &PyArray_Type, &cprim,
+            &PyArray_Type, &rprim,
+            &PyArray_Type, &cdual,
+            &PyArray_Type, &rdual))
+    return NULL;
+
+  checkintsize(cstat);
+  checkintsize(rstat);
+  
+  env = PyCObject_AsVoidPtr(pyenv);
+  lp = PyCObject_AsVoidPtr(pylp);
+
+  status = CPXcopystart(env, lp, (int *)cstat->data, (int *)rstat->data,
+                        (double *)cprim->data, (double *)rprim->data,
+                        (double *)cdual->data, (double *)rdual->data);
   CPXSTATUS;
 
   Py_INCREF(Py_None);
@@ -287,7 +353,6 @@ PyObject *copylp(PyObject *self, PyObject *args) {
   PyArrayObject *obj, *rhs, *sense;
   PyArrayObject *matbeg, *matcnt, *matind, *matval, *lb, *ub, *rngval=NULL;
   double *rngvaldata = NULL;
-  import_array();
 
   if (!PyArg_ParseTuple(args, "OOiiiO!O!O!O!O!O!O!O!O!|O!", 
 			&pyenv, &pylp,
@@ -346,7 +411,6 @@ PyObject *copyquad(PyObject *self, PyObject *args) {
   /* Python input variables */ 
   PyObject *pyenv, *pylp; 
   PyArrayObject *qmatbeg, *qmatcnt, *qmatind, *qmatval; 
-  import_array(); 
  
   if (!PyArg_ParseTuple(args, "OOO!O!O!O!",  
                         &pyenv, &pylp, 
@@ -384,7 +448,6 @@ PyObject *copyctype(PyObject *self, PyObject *args) {
 
   PyObject *pyenv, *pylp;
   PyArrayObject *ctype;
-  import_array();
 
   if (!PyArg_ParseTuple(args, "OOO!",
 			&pyenv, &pylp, 
@@ -414,7 +477,6 @@ PyObject *newcols(PyObject *self, PyObject *args) {
 
   PyObject *pyenv, *pylp;
   PyArrayObject *obj, *lb, *ub, *ctype;
-  import_array();
 
   if (!PyArg_ParseTuple(args, "OOiO!O!O!O!",
 			&pyenv, &pylp, &ccnt,
@@ -452,7 +514,6 @@ PyObject *newrows(PyObject *self, PyObject *args) {
   PyObject *pyenv, *pylp;
   PyArrayObject *rhs, *sense, *rngval=NULL;
   double *rngvaldata=NULL;
-  import_array();
 
   if (!PyArg_ParseTuple(args, "OOiO!O!|O!",
 			&pyenv, &pylp, &rcnt,
@@ -580,7 +641,6 @@ PyObject *addrows(PyObject *self, PyObject *args) {
   int numCols, numRows, nonZeroEntries; 
   PyArrayObject *rhs, *sense; 
   PyArrayObject *rmatbeg, *rmatind, *rmatval; 
-  import_array(); 
  
   if (!PyArg_ParseTuple(args, "OOiiiO!O!O!O!O!", 
                         &pyenv, &pylp, &numCols, &numRows, &nonZeroEntries, 
@@ -622,7 +682,6 @@ PyObject *chgcoeflist(PyObject *self, PyObject *args) {
 
   PyObject *pyenv, *pylp;
   PyArrayObject *rowlist, *collist, *vallist;
-  import_array();
 
   if (!PyArg_ParseTuple(args, "OOiO!O!O!",
 			&pyenv, &pylp, &numcoefs,
@@ -658,7 +717,6 @@ PyObject *chgobj(PyObject *self, PyObject *args) {
 
   PyObject *pyenv, *pylp;
   PyArrayObject *indices, *values;
-  import_array();
 
   if (!PyArg_ParseTuple(args, "OOiO!O!",
 			&pyenv, &pylp, &cnt,
@@ -718,14 +776,13 @@ PyObject *getx(PyObject *self, PyObject *args) {
 
   double *x;
   PyArrayObject *pyx;
-  int dimensions[1];
+  npy_intp dimensions[1];
 
   CPXENVptr env;
   CPXLPptr lp;
   int begin=-1, end=-1;
   PyObject *pyenv, *pylp;
 
-  import_array();
   // |ii means ii is optional
   if (!PyArg_ParseTuple(args, "OO|ii", &pyenv, &pylp, &begin, &end))
     return NULL;
@@ -741,13 +798,171 @@ PyObject *getx(PyObject *self, PyObject *args) {
   if (probtype == CPXPROB_MILP)
     status = CPXgetmipx (env, lp, x, begin, end);
   else
-    status = CPXgetx (env, lp, x, begin, end);
+    status = CPXgetx(env, lp, x, begin, end);
   CPXSTATUS;
 
   dimensions[0] = end-begin+1;
-  pyx = (PyArrayObject *)PyArray_FromDimsAndData(1,dimensions,
-						 PyArray_DOUBLE,(char *)x);
+  pyx = (PyArrayObject *)PyArray_SimpleNewFromData(1,dimensions,
+						   PyArray_DOUBLE,(void *)x);
+  pyx->flags |= NPY_OWNDATA;
   return PyArray_Return(pyx);
+}
+
+PyObject *getslack(PyObject *self, PyObject *args) {
+  /* CPXgetslack (slack variables)
+     status = CPXgetslack (env, lp, slack, 0, CPXgetnumrows(env, lp)-1);
+     In Python: slack = getslack(env,lp,begin=0,end=numrows-1)
+     If no begin and end specified, return full slack
+   */
+  int status;
+
+  double *slack;
+  PyArrayObject *pyslack;
+  npy_intp dimensions[1];
+
+  CPXENVptr env;
+  CPXLPptr lp;
+  int begin=-1, end=-1;
+  PyObject *pyenv, *pylp;
+
+  // |ii means ii is optional
+  if (!PyArg_ParseTuple(args, "OO|ii", &pyenv, &pylp, &begin, &end))
+    return NULL;
+  env = PyCObject_AsVoidPtr(pyenv);
+  lp = PyCObject_AsVoidPtr(pylp);
+
+  if (begin == -1) { // set to default values
+    begin = 0;
+    end = CPXgetnumrows(env, lp)-1;
+  }
+  slack = malloc(sizeof(double)*(end-begin+1));
+  status = CPXgetslack(env, lp, slack, begin, end);
+  CPXSTATUS;
+
+  dimensions[0] = end-begin+1;
+  pyslack = (PyArrayObject *)PyArray_SimpleNewFromData(1,dimensions,
+						       PyArray_DOUBLE,(void *)slack);
+  pyslack->flags |= NPY_OWNDATA;
+  return PyArray_Return(pyslack);
+}
+
+PyObject *getpi(PyObject *self, PyObject *args) {
+  /* CPXgetpi (dual variables)
+     status = CPXgetpi (env, lp, pi, 0, CPXgetnumrows(env, lp)-1);
+     In Python: pi = getpi(env,lp,begin=0,end=numrows-1)
+     If no begin and end specified, return full pi
+   */
+  int status;
+
+  double *pi;
+  PyArrayObject *pypi;
+  npy_intp dimensions[1];
+
+  CPXENVptr env;
+  CPXLPptr lp;
+  int begin=-1, end=-1;
+  PyObject *pyenv, *pylp;
+
+  // |ii means ii is optional
+  if (!PyArg_ParseTuple(args, "OO|ii", &pyenv, &pylp, &begin, &end))
+    return NULL;
+  env = PyCObject_AsVoidPtr(pyenv);
+  lp = PyCObject_AsVoidPtr(pylp);
+
+  if (begin == -1) { // set to default values
+    begin = 0;
+    end = CPXgetnumrows(env, lp)-1;
+  }
+  pi = malloc(sizeof(double)*(end-begin+1));
+  status = CPXgetpi(env, lp, pi, begin, end);
+  CPXSTATUS;
+
+  dimensions[0] = end-begin+1;
+  pypi = (PyArrayObject *)PyArray_SimpleNewFromData(1,dimensions,
+						    PyArray_DOUBLE,(void *)pi);
+  pypi->flags |= NPY_OWNDATA;
+  return PyArray_Return(pypi);
+}
+
+PyObject *getdj(PyObject *self, PyObject *args) {
+  /* CPXgetdj (dual slack variables)
+     status = CPXgetdj (env, lp, dj, 0, CPXgetnumcols(env, lp)-1);
+     In Python: dj = getdj(env,lp,begin=0,end=numcols-1)
+     If no begin and end specified, return full dj
+   */
+  int status;
+
+  double *dj;
+  PyArrayObject *pydj;
+  npy_intp dimensions[1];
+
+  CPXENVptr env;
+  CPXLPptr lp;
+  int begin=-1, end=-1;
+  PyObject *pyenv, *pylp;
+
+  // |ii means ii is optional
+  if (!PyArg_ParseTuple(args, "OO|ii", &pyenv, &pylp, &begin, &end))
+    return NULL;
+  env = PyCObject_AsVoidPtr(pyenv);
+  lp = PyCObject_AsVoidPtr(pylp);
+
+  if (begin == -1) { // set to default values
+    begin = 0;
+    end = CPXgetnumcols(env, lp)-1;
+  }
+  dj = malloc(sizeof(double)*(end-begin+1));
+  status = CPXgetpi(env, lp, dj, begin, end);
+  CPXSTATUS;
+
+  dimensions[0] = end-begin+1;
+  pydj = (PyArrayObject *)PyArray_SimpleNewFromData(1,dimensions,
+						    PyArray_DOUBLE,(void *)dj);
+  pydj->flags |= NPY_OWNDATA;
+  return PyArray_Return(pydj);
+}
+
+PyObject *getbase(PyObject *self, PyObject *args) {
+  /* CPXgetbase, a basis for LP solution
+     status = CPXgetbase (env, lp, cstat, rstat);
+     In Python: cstat, rstat = getbase(env,lp)
+   */
+  int status;
+
+  int *cstat, *rstat;
+  PyArrayObject *pycstat, *pyrstat;
+  PyObject *return_tuple;
+  npy_intp cdimensions[1], rdimensions[1];
+
+  CPXENVptr env;
+  CPXLPptr lp;
+  PyObject *pyenv, *pylp;
+
+  if (!PyArg_ParseTuple(args, "OO", &pyenv, &pylp))
+    return NULL;
+  env = PyCObject_AsVoidPtr(pyenv);
+  lp = PyCObject_AsVoidPtr(pylp);
+
+  cdimensions[0] = CPXgetnumcols(env, lp);
+  cstat = malloc(sizeof(int)*cdimensions[0]);
+  rdimensions[0] = CPXgetnumrows(env, lp);
+  rstat = malloc(sizeof(int)*rdimensions[0]);
+  status = CPXgetbase (env, lp, cstat, rstat);
+  CPXSTATUS;
+
+  pycstat = (PyArrayObject *)PyArray_SimpleNewFromData(1,cdimensions,
+                         PyArray_INT,(void *)cstat);
+  pycstat->flags |= NPY_OWNDATA;
+  pyrstat = (PyArrayObject *)PyArray_SimpleNewFromData(1,rdimensions,
+                         PyArray_INT,(void *)rstat);
+  pyrstat->flags |= NPY_OWNDATA;
+
+  // when building tuple, reference counts are correctly set
+  return_tuple = PyTuple_New(2);
+  PyTuple_SetItem(return_tuple,0,(PyObject *)pycstat);
+  PyTuple_SetItem(return_tuple,1,(PyObject *)pyrstat);
+  
+  return return_tuple;
 }
 
 PyObject *getobjval(PyObject *self, PyObject *args) {
@@ -810,7 +1025,6 @@ PyObject *addsos(PyObject *self, PyObject *args) {
   PyArrayObject *sostype;
   PyArrayObject *sospri, *sosbeg, *sosind; 
   PyArrayObject *soswt;
-  import_array();
 
   if (!PyArg_ParseTuple(args, "OOiiO!O!O!O!O!", 
 			&pyenv, &pylp,
@@ -860,7 +1074,6 @@ PyObject *copysos(PyObject *self, PyObject *args) {
   PyArrayObject *sostype;
   PyArrayObject *sospri, *sosbeg, *sosind; 
   PyArrayObject *soswt;
-  import_array();
 
   if (!PyArg_ParseTuple(args, "OOiiO!O!O!O!O!", 
 			&pyenv, &pylp,
@@ -904,7 +1117,6 @@ PyObject *delsetsos(PyObject *self, PyObject *args) {
   /* Python input variables */
   PyObject *pyenv, *pylp;
   PyArrayObject *delset;
-  import_array();
 
   if (!PyArg_ParseTuple(args, "OOO!", 
 			&pyenv, &pylp,
@@ -940,7 +1152,7 @@ void checkintsize(PyArrayObject *intarray) {
 }
 
 /* This helper function is from PULP software written by
-   Jean-Sébastien Roy 
+   Jean-Sï¿½bastien Roy 
    http://www.jeannot.org/~js/code/index.en.html#PuLP
 */
 void setCPLEXerrorstring(CPXENVptr env, int status) {
