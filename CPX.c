@@ -50,6 +50,7 @@ static PyObject *addrows(PyObject *self, PyObject *args);
 static PyObject *chgcoeflist(PyObject *self, PyObject *args);
 static PyObject *chgcoef(PyObject *self, PyObject *args);
 static PyObject *chgbds(PyObject *self, PyObject *args);
+static PyObject *chgrhs(PyObject *self, PyObject *args);
 static PyObject *lpopt(PyObject *self, PyObject *args);
 static PyObject *getx(PyObject *self, PyObject *args);
 static PyObject *getslack(PyObject *self, PyObject *args);
@@ -122,6 +123,7 @@ static PyMethodDef methods[] = {
   {"chgcoeflist", chgcoeflist, METH_VARARGS, chgcoeflist_doc},
   {"chgcoef", chgcoef, METH_VARARGS},
   {"chgbds", chgbds, METH_VARARGS},
+  {"chgrhs", chgrhs, METH_VARARGS},
   {"lpopt", lpopt, METH_VARARGS},
   {"mipopt", lpopt, METH_VARARGS}, // same function as lpopt
   {"qpopt", lpopt, METH_VARARGS}, // same function as lpopt
@@ -623,6 +625,38 @@ PyObject *chgbds(PyObject *self, PyObject *args) {
 }
 
 
+PyObject *chgrhs(PyObject *self, PyObject *args) {
+  /* The routine CPXchgrhs is used to change the right-hand side coefficients 
+     of a set of linear constraints in the CPLEX problem object. 
+  */
+
+  int status;
+
+  CPXENVptr env;
+  CPXLPptr lp;
+  int cnt;
+
+  PyObject *pyenv, *pylp;
+  PyArrayObject *indices, *values;
+  if (!PyArg_ParseTuple(args, "OOiO!O!",
+			&pyenv, &pylp, 
+			&cnt,
+			&PyArray_Type, &indices, 
+			&PyArray_Type, &values))
+    return NULL;
+
+  checkintsize(indices);
+
+  env = PyCObject_AsVoidPtr(pyenv);
+  lp = PyCObject_AsVoidPtr(pylp);
+
+  status = CPXchgrhs(env, lp, cnt, 
+		     (int *)indices->data, 
+		     (double *)values->data);
+  CPXSTATUS;
+  return Py_BuildValue("i", status); 
+}
+
 
 PyObject *addrows(PyObject *self, PyObject *args) { 
   /* int CPXPUBLIC CPXaddrows(CPXCENVptr env, CPXLPptr lp, 
@@ -751,6 +785,7 @@ PyObject *lpopt(PyObject *self, PyObject *args) {
   lp = PyCObject_AsVoidPtr(pylp);
   
   probtype = CPXgetprobtype(env, lp);
+  //printf("Problem type is %d\n", probtype);
   if (probtype == CPXPROB_MILP)
     status = CPXmipopt(env,lp);
   else if (probtype == CPXPROB_MIQP)
@@ -1152,7 +1187,7 @@ void checkintsize(PyArrayObject *intarray) {
 }
 
 /* This helper function is from PULP software written by
-   Jean-S�bastien Roy 
+   Jean-Sebastien Roy 
    http://www.jeannot.org/~js/code/index.en.html#PuLP
 */
 void setCPLEXerrorstring(CPXENVptr env, int status) {
