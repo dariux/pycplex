@@ -29,3 +29,9 @@ Fixed a memory leak in getx()
 Added setdpblparam function
 Added getslack, getpi, getdj, getbase, and copystart functions (for warmstarting)
 All these changes were made by Stephen Hartke
+
+1.6 [April 2008]
+***Important***: fixed a bug where CPX.getdj was calling CPX.getx instead
+Created distutils package, removed Makefile
+Install should now work on Windows, too
+Added CPX.chgrhs()
