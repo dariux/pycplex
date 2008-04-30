@@ -1,6 +1,5 @@
-import os
-from distutils.core import setup, Extension
-from distutils.sysconfig import get_python_lib
+### You have to specify correct CPLEX include and library locations
+### and the name of the cplex library (usually cplex or cplex91
 
 # Linux: change the following lines to reflect correct paths on your system 
 cplexinc = '/p/learning/pkgs/ilog/cplex91/include'
@@ -11,6 +10,17 @@ cplexlibrary = 'cplex'
 #cplexinc = r'C:\ILog\Cplex91\include'
 #cplexlib = r'C:\ILog\Cplex91\lib\msvc7\stat_sta'
 #cplexlibrary = 'cplex91'
+
+# patch distutils if it can't cope with the "classifiers" or
+# "download_url" keywords
+import os
+from distutils.core import setup, Extension
+from distutils.sysconfig import get_python_lib
+from sys import version
+if version < '2.2.3':
+    from distutils.dist import DistributionMetadata
+    DistributionMetadata.classifiers = None
+    DistributionMetadata.download_url = None
 
 numpyinc = os.path.join(get_python_lib(plat_specific=1), 'numpy/core/include/numpy')
 CPXmodule = Extension('pycplex.CPX',
@@ -29,6 +39,8 @@ setup(name = 'pycplex',
       long_description = '''
       This software provides a Python interface to the ILOG CPLEX Callable Library.
       It implements a subset of the most commonly used functions.''',
+      license = 'The MIT Licence (http://www.opensource.org/licenses/mit-license.php)',
+      platforms = ['any'],
       ext_modules = [CPXmodule],
       packages = ['pycplex'],
       package_data = {'pycplex': ['*.txt']},
