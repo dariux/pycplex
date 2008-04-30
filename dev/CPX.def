@@ -1,0 +1,4 @@
+LIBRARY	CPX.pyd
+EXPORTS
+	
+	initCPX				@1
