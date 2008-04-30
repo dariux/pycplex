@@ -1,5 +1,5 @@
 /***
-Copyright (c) 2006-2007 Darius Braziunas (darius@cs.toronto.edu)
+Copyright (c) 2006-2008 Darius Braziunas (darius@cs.toronto.edu)
 http://www.cs.toronto.edu/~darius/software/pycplex
 
 Permission is hereby granted, free of charge, to any person obtaining 
@@ -21,8 +21,6 @@ ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 ***/
 
-
-#include <math.h>
 #include "Python.h"
 #include "arrayobject.h"
 #include "ilcplex/cplex.h"
@@ -131,7 +129,7 @@ static PyMethodDef methods[] = {
   {"getmipx", getx, METH_VARARGS}, // same as getx
   {"getslack", getslack, METH_VARARGS},
   {"getpi", getpi, METH_VARARGS},
-  {"getdj", getx, METH_VARARGS},
+  {"getdj", getdj, METH_VARARGS},
   {"getbase", getbase, METH_VARARGS},
   {"getobjval", getobjval, METH_VARARGS},
   {"getmipobjval", getobjval, METH_VARARGS}, // same as getobjval
@@ -409,7 +407,6 @@ PyObject *copyquad(PyObject *self, PyObject *args) {
  
   CPXENVptr env; 
   CPXLPptr lp; 
-  int numcols, numrows, objsen; // objsen is 1 (CPX_MIN) or -1 (CPX_MAX) 
   /* Python input variables */ 
   PyObject *pyenv, *pylp; 
   PyArrayObject *qmatbeg, *qmatcnt, *qmatind, *qmatval; 
@@ -669,7 +666,6 @@ PyObject *addrows(PyObject *self, PyObject *args) {
  
   CPXENVptr env; 
   CPXLPptr lp; 
-  int rcnt;   
  
   PyObject *pyenv, *pylp; 
   int numCols, numRows, nonZeroEntries; 
@@ -677,7 +673,8 @@ PyObject *addrows(PyObject *self, PyObject *args) {
   PyArrayObject *rmatbeg, *rmatind, *rmatval; 
  
   if (!PyArg_ParseTuple(args, "OOiiiO!O!O!O!O!", 
-                        &pyenv, &pylp, &numCols, &numRows, &nonZeroEntries, 
+                        &pyenv, &pylp, 
+			&numCols, &numRows, &nonZeroEntries, 
                         &PyArray_Type, &rhs, 
                         &PyArray_Type, &sense, 
                         &PyArray_Type, &rmatbeg, 
@@ -691,8 +688,8 @@ PyObject *addrows(PyObject *self, PyObject *args) {
   env = PyCObject_AsVoidPtr(pyenv); 
   lp = PyCObject_AsVoidPtr(pylp); 
    
-  status = CPXaddrows(env, lp, numCols, numRows,  
-		      nonZeroEntries, 
+  status = CPXaddrows(env, lp, 
+		      numCols, numRows, nonZeroEntries, 
                       (double *)rhs->data,  
                       (char *)sense->data,  
                       (int *)rmatbeg->data,  
@@ -700,7 +697,6 @@ PyObject *addrows(PyObject *self, PyObject *args) {
                       (double *)rmatval->data, 
 		      NULL,NULL); 
   CPXSTATUS; 
- 
   return Py_BuildValue("i", status); 
 } 
 
@@ -947,7 +943,7 @@ PyObject *getdj(PyObject *self, PyObject *args) {
     end = CPXgetnumcols(env, lp)-1;
   }
   dj = malloc(sizeof(double)*(end-begin+1));
-  status = CPXgetpi(env, lp, dj, begin, end);
+  status = CPXgetdj(env, lp, dj, begin, end);
   CPXSTATUS;
 
   dimensions[0] = end-begin+1;
@@ -1181,7 +1177,7 @@ void checkintsize(PyArrayObject *intarray) {
   if (PyArray_ITEMSIZE(intarray) != sizeof(int)) {
     sprintf(errorstring, "The item size of numpy integer array is %d, \n \
     but CPLEX is expecting %d. Most likely, you can fix the problem by explicitly intializing \n \
-    the numpy array as numpy.array(...,dtype=numpy.int32).", PyArray_ITEMSIZE(intarray), sizeof(int));
+    the numpy array as numpy.array(...,dtype=numpy.int32).", PyArray_ITEMSIZE(intarray), (int)sizeof(int));
     PyErr_SetString(PyExc_RuntimeError, errorstring);
   } 
 }
