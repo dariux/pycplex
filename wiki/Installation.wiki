@@ -10,8 +10,14 @@ cplexinc = '/p/learning/pkgs/ilog/cplex91/include'
 cplexlib = '/p/learning/pkgs/ilog/cplex91/lib/x86-64_RHEL3.0_3.2/static_pic'
 cplexlibrary = 'cplex'
 }}}
-  * Run "python setup.py install"
+  * Run 
+{{{
+python setup.py install
+}}}
   * If you get no errors, the package will be installed in python2.5/site-packages/pycplex location
-  * Go to .../python2.5/site-packages/pycplex directory and test the installation by running "python pycplex.py" 
-
+  * Go to <...>/python2.5/site-packages/pycplex directory and test the installation:
+{{{
+python pycplex.py
+}}}
+---
 See http://www.cs.toronto.edu/~darius/software/pycplex/ for more information (some of it might be a bit outdated)
