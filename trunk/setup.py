@@ -1,5 +1,5 @@
 ### You have to specify correct CPLEX include and library locations
-### and the name of the cplex library (usually cplex or cplex91
+### and the name of the cplex library (usually cplex or cplex91)
 import sys
 
 # Linux: change the following lines to reflect correct paths on your system 

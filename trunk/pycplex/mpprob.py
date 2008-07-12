@@ -170,13 +170,20 @@ class MPProb(object):
         self.rhs = N.concatenate([self.rhs, r[1]])
         self.sense = N.concatenate([self.sense, r[2]])
         self.numrows += len(r[1])
+        
+    def removeLastConstraint(self):
+        self.A = self.A[:-1:]
+        self.rhs = self.rhs[:-1]
+        self.sense = self.sense[:-1]
+        self.numrows -= 1
+
 
     def prepare(self):
         self.makeSparseA()
         self.makeSparseQ()
         
         assert(self.numcols > 0)
-        assert(self.numrows > 0)
+        assert(self.numrows >= 0)
         assert(self.objsen in (C.CPX_MIN, C.CPX_MAX))
 
         assert(self.obj != None and len(self.obj) == self.numcols)
