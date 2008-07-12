@@ -1,31 +1,30 @@
 ### You have to specify correct CPLEX include and library locations
 ### and the name of the cplex library (usually cplex or cplex91
-import sys
 
 # Linux: change the following lines to reflect correct paths on your system 
 cplexinc = '/p/learning/pkgs/ilog/cplex91/include'
 cplexlib = '/p/learning/pkgs/ilog/cplex91/lib/x86-64_RHEL3.0_3.2/static_pic'
 cplexlibrary = 'cplex'
 
-# For Windows systems, make sure the following are correct:
-if sys.platform == 'win32':
-    cplexinc = r'C:\ILog\Cplex91\include'
-    cplexlib = r'C:\ILog\Cplex91\lib\msvc7\stat_sta'
-    cplexlibrary = 'cplex91'
-
-import os
-from distutils.core import setup, Extension
-from distutils.sysconfig import get_python_lib
+# For Windows systems, uncomment the following:
+#cplexinc = r'C:\ILog\Cplex91\include'
+#cplexlib = r'C:\ILog\Cplex91\lib\msvc7\stat_sta'
+#cplexlibrary = 'cplex91'
 
 # patch distutils if it can't cope with the "classifiers" or
 # "download_url" keywords
-if sys.version < '2.2.3':
+import os
+from distutils.core import setup, Extension
+from distutils.sysconfig import get_python_lib
+from sys import version
+if version < '2.2.3':
     from distutils.dist import DistributionMetadata
     DistributionMetadata.classifiers = None
     DistributionMetadata.download_url = None
 
 numpyinc = os.path.join(get_python_lib(plat_specific=1), 'numpy/core/include/numpy')
 CPXmodule = Extension('pycplex.CPX',
+                      define_macros = [('MAJOR_VERSION', '1'), ('MINOR_VERSION', '6')],
                       include_dirs = [cplexinc, numpyinc],
                       library_dirs = [cplexlib],
                       libraries = [cplexlibrary],

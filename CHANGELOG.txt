@@ -33,6 +33,5 @@ All these changes were made by Stephen Hartke
 1.6 [April 2008]
 ***Important***: fixed a bug where CPX.getdj was calling CPX.getx instead
 Created distutils package, removed Makefile
-Install should now work on Windows, too.
-Thanks to Vivian De Smedt for contributions leading to the distutils packaging
+Install should now work on Windows, too
 Added CPX.chgrhs()
