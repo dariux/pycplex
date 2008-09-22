@@ -1,0 +1,22 @@
+# Change the following paths according to your installation
+
+# Python
+PYTHONINC = C:\Python25\include
+PYTHONLIB = C:\Python25\libs
+
+NUMPYINC = C:\Python25\Lib\site-packages\numpy\core\include\numpy 
+
+# CPLEX
+CPLEXINC = C:\ILog\Cplex91\include
+CPLEXLIB = C:\ILog\Cplex91\lib\msvc7\stat_sta
+
+CFLAGS = -I$(PYTHONINC) -I$(NUMPYINC) -I$(CPLEXINC)
+LDFLAGS = /DLL /libpath:$(CPLEXLIB) /libpath:$(PYTHONLIB)
+
+default: CPX.pyd
+
+clean:
+	del /F *.obj *.pyd
+
+CPX.pyd: CPX.obj
+	link $(LDFLAGS) /out:CPX.pyd /def:CPX.def CPX.obj cplex91.lib

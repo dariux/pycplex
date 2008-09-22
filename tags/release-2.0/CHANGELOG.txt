@@ -1,0 +1,46 @@
+1.0 [December 2006] Initial release
+
+1.1 [July 2007] Fixes a bug in pycplex.py for 64-bit platforms.
+Thanks to Christoph Lampert for the fix.
+
+1.2 [October 2007] 
+Added checks to CPX.c to make sure the right size integer arrays are passed
+to CPLEX on 64-bit platforms.
+
+Added qpopt(), addrows(), and copyquad() functions. Thanks to Fabio De Bona for the 
+additions.
+
+1.3 [February 2008]
+Added addsos(), copysos(), delsetsos() functions
+These functions are untested, please let me know if they work correctly.
+
+Added chgbds() function
+
+Thanks to Christina Fabritius Eskebaek for adding test3 case in pycplex.py 
+for quadratic and quadratic integer programs.
+
+1.4 [February 2008]
+Added MPProb.cplexsparse() function to convert a given matrix to CPLEX sparse 
+representation. Only non-zero entries are passed to CPLEX. 
+Thanks to Stephen Hartke for this contribution.
+
+1.5 [March 2008]
+Fixed a memory leak in getx()
+Added setdpblparam function
+Added getslack, getpi, getdj, getbase, and copystart functions (for warmstarting)
+All these changes were made by Stephen Hartke
+
+1.6 [April 2008]
+***Important***: fixed a bug where CPX.getdj was calling CPX.getx instead
+Created distutils package, removed Makefile
+Install should now work on Windows, too.
+Thanks to Vivian De Smedt for contributions leading to the distutils packaging
+Added CPX.chgrhs()
+
+
+2.0a [September 2008]
+- renamed cplex_const.py to cplexcodes.py
+- added mpprob.py (replacement for pycplex.py)
+- moved tests to tests.py
+- disabled (for now) addsos and copysos because of CPLEX 9 and CPLEX 11 incompatibility
+ 

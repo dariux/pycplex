@@ -1,0 +1,28 @@
+Problem types
+-------------
+LP (CPXPROB_LP)
+QP (CPXPROB_QP) linear constraints
+QCP (CPXPROB_QCP) quadratic constraints
+MIP = {CPXPROB_MILP, CPXPROB_MIQP, CPXPROB_MIQCP}
+To change the problem type, use CPXchgprobtype and CPXcopyctype
+
+Parameters
+------------
+CPX_PARAM_LPMETHOD controls the choice of optimizer (dual simplex, primal simplex, barrier, 
+network simplex, sifting, or concurrent optimization).
+
+Solution status
+----------------
+CPXgetstat, CPXsolninfo
+CPXsolution  is equiv. to CPXgetstat, CPXgetobjval, CPXgetx, CPXgetpi, CPXgetslack, CPXgetdj
+
+Constants in Python
+-------------------
+python /u/darius/local/python/SOURCE/Python-2.4.3/Tools/scripts/h2.py 
+/direct/pkgs/ilog/cplex90/include/ilcplex/cplex.h
+
+pydoc -w CPX
+
+
+python setup.py sdist --formats=gztar,zip
+
