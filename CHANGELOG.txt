@@ -38,8 +38,9 @@ Thanks to Vivian De Smedt for contributions leading to the distutils packaging
 Added CPX.chgrhs()
 
 
-2.0a1 [April 2008]
+2.0a [September 2008]
 - renamed cplex_const.py to cplexcodes.py
 - added mpprob.py (replacement for pycplex.py)
 - moved tests to tests.py
+- disabled (for now) addsos and copysos because of CPLEX 9 and CPLEX 11 incompatibility
  

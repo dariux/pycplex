@@ -9,4 +9,7 @@ The software is released under MIT Licence.
 Darius Braziunas <darius@cs.toronto.edu>
 
 For the latest version, notes, acknowledgments, and installation instructions,
-please check http://www.cs.toronto.edu/~darius/software/pycplex
+please check 
+
+http://www.cs.toronto.edu/~darius/software/pycplex
+http://code.google.com/p/pycplex/wiki/Installation
