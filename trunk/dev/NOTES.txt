@@ -23,3 +23,6 @@ python /u/darius/local/python/SOURCE/Python-2.4.3/Tools/scripts/h2.py
 
 pydoc -w CPX
 
+
+python setup.py sdist --formats=gztar,zip
+

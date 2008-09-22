@@ -32,7 +32,7 @@ CPXmodule = Extension('pycplex.CPX',
                       sources = ['pycplex/CPX.c'])
 
 setup(name = 'pycplex',
-      version = '2.0a1',
+      version = '2.0',
       description = 'Python interface to CPLEX Callable Library',
       author = 'Darius Braziunas',
       author_email = 'darius@cs.toronto.edu',
