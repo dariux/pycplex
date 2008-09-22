@@ -192,7 +192,7 @@ PyObject *createprob(PyObject *self, PyObject *args) {
 
   lp = CPXcreateprob(env, &status, probname);
   CPXSTATUS;
-  printf("Created problem %s\n", probname);
+  //printf("Created problem %s\n", probname);
 
   return PyCObject_FromVoidPtr(lp, NULL);
 }
@@ -1046,12 +1046,15 @@ PyObject *addsos(PyObject *self, PyObject *args) {
      const int * sospri, const int * sosbeg, const int * sosind, 
      const double * soswt) */
 
+  printf("This function is disabled because of CPLEX version incompatibility\n"); 
+
+  /*
   int status;
 
   CPXENVptr env;
   CPXLPptr lp;
   int numsos, numsosnz;
-  /* Python input variables */
+  // Python input variables
   PyObject *pyenv, *pylp;
   PyArrayObject *sostype;
   PyArrayObject *sospri, *sosbeg, *sosind; 
@@ -1081,6 +1084,7 @@ PyObject *addsos(PyObject *self, PyObject *args) {
 		     (int *)sosind->data, 
 		     (double *)soswt->data);
   CPXSTATUS;
+  */
 
   Py_INCREF(Py_None);
   return Py_None;
@@ -1095,12 +1099,15 @@ PyObject *copysos(PyObject *self, PyObject *args) {
      const int * sospri, const int * sosbeg, const int * sosind, 
      const double * soswt) */
 
+  printf("This function is disabled because of CPLEX version incompatibility\n"); 
+
+  /*
   int status;
 
   CPXENVptr env;
   CPXLPptr lp;
   int numsos, numsosnz;
-  /* Python input variables */
+  // Python input variables
   PyObject *pyenv, *pylp;
   PyArrayObject *sostype;
   PyArrayObject *sospri, *sosbeg, *sosind; 
@@ -1130,7 +1137,7 @@ PyObject *copysos(PyObject *self, PyObject *args) {
 		      (int *)sosind->data, 
 		      (double *)soswt->data);
   CPXSTATUS;
-
+  */
   Py_INCREF(Py_None);
   return Py_None;
 }
@@ -1145,7 +1152,7 @@ PyObject *delsetsos(PyObject *self, PyObject *args) {
   CPXENVptr env;
   CPXLPptr lp;
 
-  /* Python input variables */
+  // Python input variables 
   PyObject *pyenv, *pylp;
   PyArrayObject *delset;
 

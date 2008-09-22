@@ -40,7 +40,6 @@ Added CPX.chgrhs()
 
 2.0a1 [April 2008]
 - renamed cplex_const.py to cplexcodes.py
-- mv pycplex.py oldpycplex.py
 - added mpprob.py (replacement for pycplex.py)
 - moved tests to tests.py
  
