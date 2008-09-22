@@ -3,8 +3,8 @@
 import sys
 
 # Linux: change the following lines to reflect correct paths on your system 
-cplexinc = '/p/learning/pkgs/ilog/cplex91/include'
-cplexlib = '/p/learning/pkgs/ilog/cplex91/lib/x86-64_RHEL3.0_3.2/static_pic'
+cplexinc = '/pkgs/ilog/cplex111/include'
+cplexlib = '/pkgs/ilog/cplex111/lib/x86-64_debian4.0_4.1/static_pic'
 cplexlibrary = 'cplex'
 
 # For Windows systems, make sure the following are correct:
