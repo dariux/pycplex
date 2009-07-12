@@ -26,3 +26,6 @@ pydoc -w CPX
 
 python setup.py sdist --formats=gztar,zip
 
+svn copy https://pycplex.googlecode.com/svn/trunk \
+        https://pycplex.googlecode.com/svn/tags/release-2.0 \
+         -m "Creating release 2.0"

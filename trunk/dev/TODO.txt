@@ -1,0 +1,2 @@
+- Add *.txt to install directory
+- Deal with different CPLEX versions for addsos and delsos functions
