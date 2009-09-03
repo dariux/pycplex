@@ -68,12 +68,13 @@ class MPProb(object):
         self.qmatbeg = self.qmatcnt = self.qmatind = None # integers
         self.qmatval = None # doubles
         self.rngval = None # or N.zeros((numrows,))
+        self._sparseA_in_sync = False
+        self._sparseQ_in_sync = False
 
     @staticmethod
     def cplexsparse(A):
         """Convert matrix A to CPLEX sparse representation
         Thanks to Stephen Hartke for the code"""
-        
         A = N.asarray(A, dtype=float)
         numrows, numcols = A.shape
         # n is the number of non-zero entries in A
@@ -86,6 +87,8 @@ class MPProb(object):
        
         i = 0
         for col in xrange(0, numcols):
+            #if col % 100 == 0: 
+            #    print col, " ", 
             matbeg[col] = i
             cur_row_count = 0
             for row in xrange(0, numrows):
@@ -106,7 +109,7 @@ class MPProb(object):
         self.A = N.asarray(A, dtype=float)
         self.numrows, numcols = self.A.shape
         assert(self.numcols == numcols)
-
+        self._sparseA_in_sync = False
 
     def setQ(self,Q):
         """Set quadratic objective matrix Q"""
@@ -125,22 +128,24 @@ class MPProb(object):
 
     def makeSparseA(self):
         """Convert constraint matrix A to CPLEX sparse representation"""
-        s = MPProb.cplexsparse(self.A)
-        self.matval = s['matval']
-        self.matind = s['matind']
-        self.matbeg = s['matbeg']
-        self.matcnt = s['matcnt']
+        if not self._sparseA_in_sync:
+            s = MPProb.cplexsparse(self.A)
+            self.matval = s['matval']
+            self.matind = s['matind']
+            self.matbeg = s['matbeg']
+            self.matcnt = s['matcnt']
+            self._sparseA_in_sync = True
 
 
     def makeSparseQ(self):
         """Convert matrix Q to CPLEX sparse representation"""
-        if self.Q is not None:
+        if self.Q is not None and not self._sparseQ_in_sync:
             s = MPProb.cplexsparse(self.Q)
             self.qmatval = s['matval']
             self.qmatind = s['matind']
             self.qmatbeg = s['matbeg']
             self.qmatcnt = s['matcnt']
-
+            self._sparseQ_in_sync = True
 
     def addConstraint(self, c):
         # c = {'indices', 'coeffs', 'sense', 'rhs'}
@@ -167,12 +172,14 @@ class MPProb(object):
     def addConstraintRows(self, r):
         # Arows = r[0], rhs = r[1], sense = r[2]
         self.A = N.vstack([self.A, r[0]])
+        self._sparseA_in_sync = False
         self.rhs = N.concatenate([self.rhs, r[1]])
         self.sense = N.concatenate([self.sense, r[2]])
         self.numrows += len(r[1])
         
     def removeLastConstraint(self):
         self.A = self.A[:-1:]
+        self._sparseA_in_sync = False
         self.rhs = self.rhs[:-1]
         self.sense = self.sense[:-1]
         self.numrows -= 1
