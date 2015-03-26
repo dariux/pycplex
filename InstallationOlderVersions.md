@@ -1,0 +1,20 @@
+Starting with Version 1.6 (April 2008), pycplex uses distutils. Therefore, to install pycplex:
+  * Download and unzip pycplex package
+  * Go to pycplex-1.x/ directory
+  * Edit setup.py file and follow the instructions to specify correct CPLEX include and library locations as well as the name of the CPLEX library. You only need to change the following three lines according to your system setup:
+```
+cplexinc = '/p/learning/pkgs/ilog/cplex91/include'
+cplexlib = '/p/learning/pkgs/ilog/cplex91/lib/x86-64_RHEL3.0_3.2/static_pic'
+cplexlibrary = 'cplex'
+```
+  * Run
+```
+python setup.py install
+```
+  * If you get no errors, the package will be installed in python2.5/site-packages/pycplex location
+  * Go to <...>/python2.5/site-packages/pycplex directory and test the installation:
+```
+python pycplex.py
+```
+---
+See http://www.cs.toronto.edu/~darius/software/pycplex/ for more information (some of it might be a bit outdated)
